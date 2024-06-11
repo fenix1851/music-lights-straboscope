@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: center;
+            background-color: black;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+            width: 50%;
+        }
+
+        .slider-container input[type=range] {
+            width: 100%;
+        }
+
+        .color-picker-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="color-picker-container">
+        <h2>Select a Color (HTML Picker)</h2>
+        <input type="color" id="simpleColorPicker">
+        <button id="saveColorButton">Save Color</button>
+    </div>
+
+    <div class="color-picker-container">
+        <h2>Select a Color (Spectrum Picker)</h2>
+        <input type='text' id="advancedColorPicker">
+    </div>
+
+    <div class="slider-container">
+        <h2>Cutoff Frequency: <span id="cutoffValue">50 Hz</span></h2>
+        <input type="range" id="cutoffSlider" min="20" max="200" value="50" step="5">
+        <input type="number" id="cutoffNumber" min="20" max="200" value="50" step="5">
+    </div>
+
+    <script>
+        
+        $(document).ready(function () {
+        $('#advancedColorPicker').spectrum({
+        color: "#ff0000",
+        change: function(color) {
+        sendPatchRequest({
+        color: color.toHexString().substring(1) // Remove '#' from color
+        });
+        },
+        move: function(color) { // This event is triggered when the color is changed
+        sendPatchRequest({
+        color: color.toHexString().substring(1) // Remove '#' from color
+        });
+        }
+        });
+
+            $('#cutoffSlider, #cutoffNumber').on('input', function () {
+                var cutoff = $(this).val();
+                cutoff = parseInt(cutoff);
+                $('#cutoffSlider').val(cutoff);
+                $('#cutoffNumber').val(cutoff);
+                $('#cutoffValue').text(cutoff + ' Hz');
+                sendPatchRequest({
+                    cutoffFrequency: cutoff
+                });
+            });
+
+            function sendPatchRequest(data) {
+                $.ajax({
+                    url: '/api/patch-config',
+                    type: 'PATCH',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        console.log('Configuration updated:', response);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error updating configuration:', error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
